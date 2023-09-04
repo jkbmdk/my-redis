@@ -2,36 +2,16 @@ use std::vec::IntoIter;
 
 use bytes::Bytes;
 
+use crate::database::Database;
 use crate::frame::Frame;
 use crate::Result;
 
-#[derive(Debug)]
-pub enum Command {
-    Get(String),
-    Set(String, Bytes),
-    Unknown,
-}
+pub(crate) mod get;
+pub(crate) mod set;
+pub(crate) mod unknown;
 
-impl Command {
-    pub fn  from_frame(frame: Frame) -> Result<Command> {
-        let mut iterator: IntoIter<Frame>;
-
-        match frame {
-            Frame::Array(val) => {
-                iterator = Vec::into_iter(val);
-            }
-            _ => return Err(format!("protocol error; expected array, got {:?}", frame).into()),
-        }
-
-        let command_name = next_string(&mut iterator)?;
-
-        let command = match &command_name[..] {
-            "GET" => Command::Get(next_string(&mut iterator)?),
-            "SET" => Command::Set(next_string(&mut iterator)?, next_bytes(&mut iterator)?),
-            _ => Command::Unknown
-        };
-        Ok(command)
-    }
+pub trait Command {
+    fn execute(&self, db: Database) -> Frame;
 }
 
 pub(crate) fn next_string(iterator: &mut IntoIter<Frame>) -> Result<String> {
