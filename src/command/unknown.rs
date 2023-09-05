@@ -9,6 +9,6 @@ pub(crate) struct Unknown {
 
 impl Command for Unknown {
     fn execute(&self, _db: Database) -> Frame {
-        Frame::Error(format!("Command \"{:?}\"not implemented", self.name))
+        Frame::SimpleError(format!("Command \"{:?}\"not implemented", self.name))
     }
 }

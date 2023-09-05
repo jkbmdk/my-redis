@@ -5,7 +5,7 @@ use bytes::{Buf, Bytes};
 #[derive(Clone, Debug)]
 pub enum Frame {
     Simple(String),
-    Error(String),
+    SimpleError(String),
     Integer(u64),
     Bulk(Bytes),
     Null,
@@ -18,8 +18,10 @@ pub enum Error {
     Other(String),
 }
 
-impl Frame {
-    pub(crate) fn parse(payload: &mut Cursor<&[u8]>) -> Result<Frame, Error> {
+impl TryFrom<&mut Cursor<&[u8]>> for Frame {
+    type Error = Error;
+
+    fn try_from(payload: &mut Cursor<&[u8]>) -> Result<Self, Self::Error> {
         if !payload.has_remaining() {
             return Err(Error::Incomplete);
         }
@@ -35,7 +37,7 @@ impl Frame {
                 let line = get_line(payload)?.to_vec();
                 let string = String::from_utf8(line).unwrap();
 
-                Ok(Frame::Error(string))
+                Ok(Frame::SimpleError(string))
             }
             b':' => {
                 let len = get_uint(payload)?;
@@ -71,7 +73,7 @@ impl Frame {
                 let mut out = Vec::with_capacity(len);
 
                 for _ in 0..len {
-                    out.push(Frame::parse(payload)?);
+                    out.push(Frame::try_from(&mut *payload)?);
                 }
 
                 Ok(Frame::Array(out))
@@ -79,16 +81,18 @@ impl Frame {
             actual => Err(Error::Other(format!("unknown frame leading byte {}", actual))),
         }
     }
+}
 
-    pub(crate) fn serialize(&self) -> Vec<u8> {
+impl From<Frame> for Vec<u8> {
+    fn from(frame: Frame) -> Self {
         let mut bytes: Vec<u8> = vec![];
 
-        match self {
+        match frame {
             Frame::Simple(val) => {
                 bytes.push(b'+');
                 bytes.extend(val.as_bytes());
             }
-            Frame::Error(val) => {
+            Frame::SimpleError(val) => {
                 bytes.push(b'-');
                 bytes.extend(val.as_bytes());
             }
@@ -113,7 +117,7 @@ impl Frame {
                 bytes.extend(len.to_ne_bytes());
                 bytes.extend(b"\r\n");
                 for frame in val {
-                    let sub = frame.serialize();
+                    let sub: Vec<u8> = frame.into();
                     bytes.extend(sub)
                 }
             }
@@ -129,8 +133,8 @@ fn get_line<'a>(payload: &mut Cursor<&'a [u8]>) -> Result<&'a [u8], Error> {
     let end = payload.get_ref().len() - 1;
 
     for i in start..end {
-        if payload.get_ref()[i] == b'\n' {
-            payload.set_position((i + 1) as u64);
+        if payload.get_ref()[i] == b'\r' && payload.get_ref()[i + 1] == b'\n' {
+            payload.set_position((i + 2) as u64);
 
             return Ok(&payload.get_ref()[start..i]);
         }

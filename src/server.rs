@@ -27,7 +27,7 @@ impl Server {
         while let Some(frame) = connection.read_frame().await.unwrap() {
             let response: Frame = self.execute(frame).unwrap();
 
-            connection.write_frame(&response).await.unwrap();
+            connection.write_frame(response).await.unwrap();
         }
     }
 

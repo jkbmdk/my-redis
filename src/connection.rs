@@ -42,7 +42,7 @@ impl Connection {
 
         let mut buf = Cursor::new(&self.buffer[..]);
 
-        match Frame::parse(&mut buf) {
+        match Frame::try_from(&mut buf) {
             Ok(frame) => {
                 self.buffer.advance(buf.position() as usize);
 
@@ -53,8 +53,8 @@ impl Connection {
         }
     }
 
-    pub async fn write_frame(&mut self, frame: &Frame) -> io::Result<()> {
-        let bytes = frame.serialize();
+    pub async fn write_frame(&mut self, frame: Frame) -> io::Result<()> {
+        let bytes: Vec<u8> = frame.into();
         let slice = bytes.as_slice();
         self.stream.write_all(slice).await?;
         self.stream.flush().await
