@@ -161,3 +161,42 @@ fn peek_u8(payload: &mut Cursor<&[u8]>) -> Result<u8, Error> {
     payload.set_position(position);
     Ok(byte)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_peeks_u8() {
+        let buffer: [u8; 4] = [b'-', b'e', b'r', b'r'];
+        let mut cursor: Cursor<&[u8]> = Cursor::new(&buffer);
+
+        let result = peek_u8(&mut cursor).unwrap();
+
+        assert_eq!(b'-', result);
+        assert_eq!(0, cursor.position())
+    }
+
+
+    #[test]
+    fn it_gets_a_line() {
+        let buffer: [u8; 11] = [b'G', b'E', b'T', b'\r', b'\n', b'+', b'k', b'e', b'y', b'\r', b'\n'];
+        let mut cursor: Cursor<&[u8]> = Cursor::new(&buffer);
+
+        let result = get_line(&mut cursor).unwrap();
+
+        assert_eq!("GET", String::from_utf8(result.to_vec()).unwrap());
+        assert_eq!(5, cursor.position());
+    }
+
+    #[test]
+    fn it_gets_unit() {
+        let buffer: [u8; 5] = [b'1', b'1', b'5', b'\r', b'\n'];
+        let mut cursor: Cursor<&[u8]> = Cursor::new(&buffer);
+
+        let result = get_uint(&mut cursor).unwrap();
+
+        assert_eq!(115, result);
+        assert_eq!(5, cursor.position());
+    }
+}
