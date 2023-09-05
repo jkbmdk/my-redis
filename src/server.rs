@@ -44,8 +44,8 @@ impl Server {
         let command_name = next_string(&mut iterator)?;
 
         let command: Box<dyn Command> = match &command_name[..] {
-            "GET" => Box::new(Get::new(&mut iterator)),
-            "SET" => Box::new(Set::new(&mut iterator)),
+            "GET" => Box::new(Get::from(&mut iterator)),
+            "SET" => Box::new(Set::from(&mut iterator)),
             v => Box::new(Unknown { name: v.to_string() }),
         };
         Ok(command.execute(self.db.clone()))
