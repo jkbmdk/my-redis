@@ -4,6 +4,7 @@ use tokio::net::TcpStream;
 
 use crate::command::{Command, next_string};
 use crate::command::get::Get;
+use crate::command::mget::MGet;
 use crate::command::set::Set;
 use crate::command::unknown::Unknown;
 use crate::connection::Connection;
@@ -45,6 +46,7 @@ impl Server {
 
         let command: Box<dyn Command> = match &command_name[..] {
             "GET" => Box::new(Get::from(&mut iterator)),
+            "MGET" => Box::new(MGet::from(&mut iterator)),
             "SET" => Box::new(Set::from(&mut iterator)),
             v => Box::new(Unknown { name: v.to_string() }),
         };

@@ -114,11 +114,11 @@ impl From<Frame> for Vec<u8> {
             Frame::Array(val) => {
                 let len = val.len() as u64;
                 bytes.push(b'*');
-                bytes.extend(len.to_ne_bytes());
+                bytes.extend(len.to_string().as_bytes());
                 bytes.extend(b"\r\n");
                 for frame in val {
                     let sub: Vec<u8> = frame.into();
-                    bytes.extend(sub)
+                    bytes.extend(sub);
                 }
             }
         }

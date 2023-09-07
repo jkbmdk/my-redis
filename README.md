@@ -19,4 +19,5 @@ cargo run --example set_get
 ### Commands
 
 * GET
+* MGET
 * SET
