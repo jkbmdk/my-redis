@@ -45,3 +45,13 @@ pub(crate) fn next_bytes(iterator: &mut IntoIter<Frame>) -> Result<Bytes> {
         ).into()),
     }
 }
+
+pub(crate) fn next_integer(iterator: &mut IntoIter<Frame>) -> Result<u64> {
+    match iterator.next().unwrap() {
+        Frame::Integer(u) => Ok(u),
+        frame => Err(format!(
+            "protocol error; expected integer frame, got {:?}",
+            frame
+        ).into()),
+    }
+}
