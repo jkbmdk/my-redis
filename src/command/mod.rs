@@ -1,10 +1,14 @@
 use std::vec::IntoIter;
 
 use bytes::Bytes;
+use crate::command::get::Get;
+use crate::command::mget::MGet;
+use crate::command::set::Set;
+use crate::command::unknown::Unknown;
 
 use crate::database::Database;
 use crate::frame::Frame;
-use crate::Result;
+use crate::{Error, Result};
 
 pub(crate) mod get;
 pub(crate) mod set;
@@ -13,6 +17,26 @@ pub(crate) mod mget;
 
 pub trait Command {
     fn execute(&self, db: Database) -> Frame;
+}
+
+impl TryFrom<&mut IntoIter<Frame>> for Box<dyn Command> {
+    type Error = Error;
+
+    fn try_from(frames: &mut IntoIter<Frame>) -> Result<Self> {
+        let command_name = match next_string(frames) {
+            Ok(name) => name,
+            Err(_) => return Err("Lack of command name".into())
+        };
+
+        let command: Box<dyn Command> = match &command_name[..] {
+            "GET" => Box::new(Get::from(frames)),
+            "MGET" => Box::new(MGet::from(frames)),
+            "SET" => Box::new(Set::from(frames)),
+            v => Box::new(Unknown { name: v.to_string() }),
+        };
+
+        Ok(command)
+    }
 }
 
 pub(crate) fn next_string(iterator: &mut IntoIter<Frame>) -> Result<String> {

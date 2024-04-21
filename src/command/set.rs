@@ -66,8 +66,8 @@ impl From<&mut IntoIter<Frame>> for Set {
                         ttl = Some(Duration::from_secs(seconds));
                     }
                     "PX" => {
-                        let milis = next_integer(frames).unwrap();
-                        ttl = Some(Duration::from_millis(milis));
+                        let millis = next_integer(frames).unwrap();
+                        ttl = Some(Duration::from_millis(millis));
                     }
                     "EXAT" => {
                         let timestamp_seconds = next_integer(frames).unwrap();
@@ -76,8 +76,8 @@ impl From<&mut IntoIter<Frame>> for Set {
                         ttl = duration.checked_sub(timestamp);
                     }
                     "PXAT" => {
-                        let timestamp_milis = next_integer(frames).unwrap();
-                        let duration = Duration::from_millis(timestamp_milis);
+                        let timestamp_millis = next_integer(frames).unwrap();
+                        let duration = Duration::from_millis(timestamp_millis);
                         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
                         ttl = duration.checked_sub(timestamp);
                     }

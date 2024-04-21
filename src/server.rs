@@ -2,11 +2,7 @@ use std::vec::IntoIter;
 
 use tokio::net::TcpStream;
 
-use crate::command::{Command, next_string};
-use crate::command::get::Get;
-use crate::command::mget::MGet;
-use crate::command::set::Set;
-use crate::command::unknown::Unknown;
+use crate::command::Command;
 use crate::connection::Connection;
 use crate::database::{Database, new_db};
 use crate::Error;
@@ -42,14 +38,8 @@ impl Server {
             _ => return Err(format!("protocol error; expected array, got {:?}", frame).into()),
         }
 
-        let command_name = next_string(&mut iterator)?;
+        let command: Box<dyn Command> = (&mut iterator).try_into()?;
 
-        let command: Box<dyn Command> = match &command_name[..] {
-            "GET" => Box::new(Get::from(&mut iterator)),
-            "MGET" => Box::new(MGet::from(&mut iterator)),
-            "SET" => Box::new(Set::from(&mut iterator)),
-            v => Box::new(Unknown { name: v.to_string() }),
-        };
         Ok(command.execute(self.db.clone()))
     }
 }
