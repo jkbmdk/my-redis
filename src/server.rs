@@ -4,9 +4,9 @@ use tokio::net::TcpStream;
 
 use crate::command::Command;
 use crate::connection::Connection;
-use crate::database::{Database, new_db};
-use crate::Error;
+use crate::database::{new_db, Database};
 use crate::frame::Frame;
+use crate::Error;
 
 #[derive(Clone)]
 pub struct Server {
@@ -14,10 +14,6 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new() -> Self {
-        Server { db: new_db() }
-    }
-
     pub async fn process(&self, socket: TcpStream) {
         let mut connection = Connection::new(socket);
 
@@ -41,5 +37,11 @@ impl Server {
         let command: Box<dyn Command> = (&mut iterator).try_into()?;
 
         Ok(command.execute(self.db.clone()))
+    }
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Server { db: new_db() }
     }
 }

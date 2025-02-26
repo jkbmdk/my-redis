@@ -8,7 +8,7 @@ async fn main() {
 
     println!("Listening");
 
-    let server: Server = Server::new();
+    let server: Server = Default::default();
 
     loop {
         let (socket, _) = listener.accept().await.unwrap();
@@ -19,3 +19,4 @@ async fn main() {
         });
     }
 }
+
